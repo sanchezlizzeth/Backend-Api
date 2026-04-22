@@ -23,13 +23,22 @@ const app = express();
 
 app.use(helmet());
 app.use(cors({
-  origin: ["http://localhost:5173"],
+  origin: ["http://localhost:5173", "https://frontend-app-woad-rho.vercel.app"],
   credentials: true,
   methods: ["GET", "POST", "PUT", "DELETE"],
-  allowedHeaders: ["Content-Type", "Authorization"],
+  allowedHeaders: ["Content-Type", "Authorization", "x-api-key"],
 }));
 
 app.use(express.json());
+
+// Middleware API KEY
+app.use((req, res, next) => {
+  const apiKey = req.headers["x-api-key"];
+  if (apiKey !== process.env.API_KEY) {
+    return res.status(401).json({ error: "API Key inválida" });
+  }
+  next();
+});
 
 usuarioRoutes(app);
 app.use("/api/users", userRoutes);
@@ -73,7 +82,6 @@ app.post(
     }
 
     const { texto, puntuacion } = req.body;
-
     const textoSeguro = filterXSS(texto.trim());
 
     return res.status(200).json({
